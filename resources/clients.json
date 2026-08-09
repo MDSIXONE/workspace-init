@@ -1,0 +1,44 @@
+{
+  "clients": {
+    "opencode": {
+      "globalConfig": ["~/.config/opencode/opencode.json", "~/.config/opencode/opencode.jsonc"],
+      "projectConfig": "opencode.json",
+      "configFormat": "json",
+      "mcpKey": "mcp",
+      "envSyntax": "{env:VAR}",
+      "notes": "MCP 写在项目根 opencode.json 的 mcp 段；opencode 不读取 .mcp.json。context7 官方推荐 remote 形式 https://mcp.context7.com/mcp"
+    },
+    "codex": {
+      "globalConfig": ["~/.codex/config.toml"],
+      "projectConfig": ".codex/config.toml",
+      "configFormat": "toml",
+      "mcpKey": "mcp_servers",
+      "envSyntax": "",
+      "notes": "TOML 格式，不自动改写，提供手动配置示例"
+    },
+    "claude-code": {
+      "globalConfig": ["~/.claude/settings.json", "~/.claude.json"],
+      "projectConfig": ".mcp.json",
+      "configFormat": "json",
+      "mcpKey": "mcpServers",
+      "envSyntax": "{env:VAR}",
+      "notes": "项目级 .mcp.json，server 定义用 command 字符串 + args 数组 + env 对象"
+    },
+    "cursor": {
+      "globalConfig": [],
+      "projectConfig": ".cursor/mcp.json",
+      "configFormat": "json",
+      "mcpKey": "mcpServers",
+      "envSyntax": "${VAR}",
+      "notes": ""
+    },
+    "vscode": {
+      "globalConfig": [],
+      "projectConfig": ".vscode/mcp.json",
+      "configFormat": "json",
+      "mcpKey": "servers",
+      "envSyntax": "${VAR}",
+      "notes": "需安装 MCP 扩展；server 定义用 type: stdio + command 数组"
+    }
+  }
+}

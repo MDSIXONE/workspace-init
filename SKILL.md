@@ -1,16 +1,17 @@
 ---
 name: workspace-init
-description: 按项目类型初始化 AI 工作区文件夹结构，创建通用 AGENTS.md（含三条通用规则），安装 project-memory-records 通用 skill 并注册 context7 MCP，使用技能记忆模板（通用文件夹自动创建，特殊文件夹逐项询问）。Use when 用户说"初始化AI工作区"、"初始化工作区"、"创建比赛文件夹"、"创建项目文件夹"、"新建工作区文件夹结构"、"AI 工作区初始化" 等初始化文件夹结构的请求。
+description: 按项目类型初始化 AI 工作区文件夹结构，创建通用 AGENTS.md（含三条通用规则），安装 project-memory-records 与 github-commit 通用 skill 并注册 context7 MCP，使用技能记忆模板（通用文件夹自动创建，特殊文件夹逐项询问）。Use when 用户说"初始化AI工作区"、"初始化工作区"、"创建比赛文件夹"、"创建项目文件夹"、"新建工作区文件夹结构"、"AI 工作区初始化" 等初始化文件夹结构的请求。
 ---
 
 # 工作区初始化 (Workspace Init)
 
-在**当前工作目录**下完成四件事：
+在**当前工作目录**下完成五件事：
 
 1. 按"项目类型模板"创建子文件夹（模板记忆保存在同目录 `config.json`）。
 2. 创建通用 `AGENTS.md`（含三条通用规则）。
 3. 安装通用 skill `project-memory-records` 到 `.agents/skills/`。
-4. 注册 MCP server `context7`（配置见 `resources/context7-mcp.json`）。
+4. 安装通用 skill `github-commit` 到 `.agents/skills/`。
+5. 注册 MCP server `context7`（配置见 `resources/context7-mcp.json`）。
 
 ## 数据文件 config.json
 
@@ -53,16 +54,18 @@ description: 按项目类型初始化 AI 工作区文件夹结构，创建通用
    a. 直接创建全部 `common` 文件夹（已存在则跳过并保留原内容）。
    b. 逐个询问 `special` 文件夹是否需要创建（已存在且非空的保留原内容，无需重建）。
    c. 询问是否要追加新文件夹或调整分类；用户补充的文件夹默认加入 `special`（可再改），随后更新 `config.json`。
-6. **创建通用 AGENTS.md**（仅当不存在时创建；若已存在，则仅追加缺失的小节，不覆盖已有内容）：模板内容见资源文件 `resources/universal-rules.md`（Base directory 为本 skill 目录），用该模板创建/追加 AGENTS.md。模板含两部分：`Universal Rules`（三条通用规则）+ `Commit & Pull Request Guidelines`（中文 Emoji 提交规范，融合 Conventional Commits 语义，含类型对照表、破坏性变更、提交工作流与 Git 安全协议）。
-7. **安装通用 skill project-memory-records**：若 `.agents/skills/project-memory-records/SKILL.md` 不存在，把本技能内置的 `resources/project-memory-records/SKILL.md` 原样复制到该路径。
-8. **注册 MCP server context7**：读取资源文件 `resources/context7-mcp.json`（Base directory 为本 skill 目录），将其中 `mcp` 段写入**当前 AI 客户端对应的项目级 MCP 配置文件**：
-   - 优先写入项目根目录的 `.mcp.json`（多数 AI 客户端/编辑器通用的项目级 MCP 配置格式）；
-   - 若用户使用的 AI 客户端有专属的 MCP 配置文件（非 `.mcp.json`），询问用户该客户端名及其配置位置，按其约定写入；
-   - 若目标文件不存在：创建之，内容为该资源文件的 `mcp` 段；
-   - 若已存在：保留全部现有字段，仅在 `mcp` 对象中追加 `context7` 键；若 `mcp` 不存在则新建。**不覆盖、不删除现有配置**；
-   - 环境变量引用语法因客户端而异（如 `${VAR}`、`{env:VAR}`、直接字面值等）：默认使用 `${VAR}` 形式，若用户客户端使用不同语法，按该客户端约定改写。
-9. 在当前目录写入标记文件 `.workspace-init.json`（记录项目类型、已创建文件夹、已装组件、时间），用于重复初始化时跳过已存在目录。
-10. 汇总输出：已创建、已存在（保留原内容）、模板记忆与组件安装情况。
+6. **创建通用 AGENTS.md**（仅当不存在时创建；若已存在，则仅追加缺失的小节，不覆盖已有内容）：模板内容见资源文件 `resources/universal-rules.md`（Base directory 为本 skill 目录），用该模板创建/追加 AGENTS.md。模板含 `Universal Rules`（三条通用规则）。提交规范见 `github-commit` 技能（全局已注册、自动加载），无需在 AGENTS.md 中重申。
+7. **安装通用 skill project-memory-records**：若 `.agents/skills/project-memory-records/SKILL.md` 不存在，把本技能内置的 `resources/project-memory-records/` 整个目录原样复制到 `.agents/skills/project-memory-records/`，保持子目录结构（当前仅含 `SKILL.md`；后续新增资源文件时一并复制）。
+8. **安装通用 skill github-commit**：若 `.agents/skills/github-commit/SKILL.md` 不存在，把本技能内置的 `resources/github-commit/` 整个目录（含 `SKILL.md` 与 `resources/commit-guidelines.md`）原样复制到 `.agents/skills/github-commit/`，保持子目录结构。
+9. **注册 MCP server context7**：读取资源文件 `resources/context7-mcp.json`（Base directory 为本 skill 目录，server 定义模板）与 `resources/clients.json`（Base directory 为本 skill 目录，各客户端配置约定表），按以下顺序处理：
+   - **确认客户端**：询问用户当前使用的 AI 客户端（如 opencode、codex、claude code、cursor、vscode 等）。`clients.json` 已记录常见客户端的全局配置路径、项目级配置文件名、格式与 `mcp` 键名；未记录的客户端，请用户提供其全局/项目级配置位置与格式；
+   - **先检查全局是否已注册**：按 `clients.json` 中该客户端的 `globalConfig` 路径逐一读取全局配置，若 `context7` 已注册，**跳过写入**，汇总中记录"全局已注册，无需项目级配置"，本步结束；
+   - **写入项目根**：目标配置文件一律写入**项目根**（用 `git rev-parse --show-toplevel` 判定，未检出 git 时用工作区根），而非当前子目录；文件名、`mcp` 键名（如 opencode 的 `mcp`、claude code/cursor 的 `mcpServers`、vscode 的 `servers`）、环境变量语法（如 `{env:VAR}`、`${VAR}`）均按 `clients.json` 中该客户端的约定，将模板中的 server 定义改写后追加；
+   - JSON 格式配置（opencode.json、.mcp.json、.cursor/mcp.json、.vscode/mcp.json 等）：若目标文件不存在，创建之；若已存在，保留全部现有字段，仅在客户端对应的 `mcp` 键对象中追加 `context7`，**不覆盖、不删除现有配置**；
+   - TOML 等其他格式（如 codex 的 config.toml）：不自动改写，给出该客户端的 context7 手动配置示例（含 mcp 键名与语法）供用户粘贴；
+   - 环境变量引用语法因客户端而异（如 `${VAR}`、`{env:VAR}`、直接字面值等）：优先用 `clients.json` 记录的语法，未记录的默认 `${VAR}` 并询问用户。
+10. 在当前目录写入标记文件 `.workspace-init.json`（记录项目类型、已创建文件夹、已装组件、时间），用于重复初始化时跳过已存在目录。
+11. 汇总输出：已创建、已存在（保留原内容）、模板记忆与组件安装情况。
 
 ## 说明
 
