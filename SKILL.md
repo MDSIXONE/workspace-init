@@ -15,17 +15,31 @@ description: 按项目类型初始化 AI 工作区文件夹结构，创建通用
 
 ## 数据文件 config.json
 
+每个文件夹用对象 `{name, label}` 表示：`name` 是实际创建的英文目录名，`label` 是交互时展示的中文名。
+
 ```json
 {
   "templates": {
     "比赛": {
-      "common": ["比赛规则", "比赛源码", "文档", "临时文件"],
-      "special": ["比赛地图", "机器信息", "仿真环境", "技术报告"]
+      "common": [
+        {"name": "rules", "label": "比赛规则"},
+        {"name": "src", "label": "比赛源码"},
+        {"name": "docs", "label": "文档"},
+        {"name": "tmp", "label": "临时文件"}
+      ],
+      "special": [
+        {"name": "maps", "label": "比赛地图"},
+        {"name": "machine-info", "label": "机器信息"},
+        {"name": "simulation", "label": "仿真环境"},
+        {"name": "report", "label": "技术报告"}
+      ]
     }
   }
 }
 ```
 
+- `name`：英文目录名，实际创建到磁盘的文件夹名（小写、连字符分隔，如 `src`、`machine-info`）。
+- `label`：中文显示名，仅在交互（询问、汇总）时展示。
 - `common`：通用文件夹，每次自动创建。
 - `special`：特殊文件夹，每次逐项询问是否需要。
 - 模板可以按项目类型（比赛、研发、课程作业等）各存一套；`config.json` 不存在时视为空配置。
@@ -46,15 +60,17 @@ description: 按项目类型初始化 AI 工作区文件夹结构，创建通用
 2. 读取 `config.json`，加载已有模板。
 3. 询问用户：这个文件夹用来做什么项目/用途（如"比赛"、"研发"、"课程作业"）。得到类型名 `T`（若用户直接说"初始化AI工作区 比赛"这类带类型的话，跳过询问）。
 4. 若 `templates` 中**没有**类型 `T`（首次使用该类型）：
-   a. 询问需要创建哪些子文件夹，让用户列出（逗号/空格/换行分隔均可）。可给常用建议：比赛规则、比赛地图、比赛源码、机器信息、仿真环境、文档、临时文件、技术报告。
-   b. 创建用户列出的所有文件夹（仅创建不存在的；已存在且有内容的文件夹保留原内容，跳过创建）。
-   c. 将列出的文件夹逐一询问分类：通用（每次都要）还是特殊（下次按需询问）。默认建议：规则/源码/文档/临时文件→通用；地图/环境/报告/机器信息→特殊，用户可修改。
-   d. 写入 `config.json`：`templates[T] = { "common": [...], "special": [...] }`，并告知用户模板已记忆。
+   a. 询问需要创建哪些子文件夹（用中文展示建议，如"比赛规则、比赛地图、比赛源码、机器信息、仿真环境、文档、临时文件、技术报告"），让用户用中文列出（逗号/空格/换行分隔均可）。
+   b. 为用户列出的每个中文文件夹名建议一个英文目录名（小写、连字符分隔，如"源码"→`src`、"临时文件"→`tmp`、"机器信息"→`machine-info`），列表展示给用户确认或修改。
+   c. 用确认后的英文名创建文件夹（仅创建不存在的；已存在且有内容的文件夹保留原内容，跳过创建）。
+   d. 将列出的文件夹逐一询问分类：通用（每次都要）还是特殊（下次按需询问）。默认建议：规则/源码/文档/临时文件→通用；地图/环境/报告/机器信息→特殊，用户可修改。
+   e. 写入 `config.json`：`templates[T] = { "common": [{"name":..., "label":...}, ...], "special": [...] }`，并告知用户模板已记忆。
 5. 若类型 `T` 已有模板：
-   a. 直接创建全部 `common` 文件夹（已存在则跳过并保留原内容）。
-   b. 逐个询问 `special` 文件夹是否需要创建（已存在且非空的保留原内容，无需重建）。
-   c. 询问是否要追加新文件夹或调整分类；用户补充的文件夹默认加入 `special`（可再改），随后更新 `config.json`。
+   a. 直接创建全部 `common` 文件夹（用 `name` 英文名创建；已存在则跳过并保留原内容）。
+   b. 逐个询问 `special` 文件夹是否需要创建（用 `label` 中文名展示；已存在且非空的保留原内容，无需重建）。
+   c. 询问是否要追加新文件夹或调整分类；用户补充的文件夹需同时确定中文名和英文名，默认加入 `special`（可再改），随后更新 `config.json`。
 6. **创建通用 AGENTS.md**（仅当不存在时创建；若已存在，则仅追加缺失的小节，不覆盖已有内容）：模板内容见资源文件 `resources/universal-rules.md`（Base directory 为本 skill 目录），用该模板创建/追加 AGENTS.md。模板含 `Universal Rules`（三条通用规则）。提交规范见 `github-commit` 技能（全局已注册、自动加载），无需在 AGENTS.md 中重申。
+   6a. **PowerShell 防错规则（条件追加，Windows 环境）**：检测用户是否使用 PowerShell 7.x——运行 `pwsh -NoProfile -Command '$PSVersionTable.PSVersion.Major'`（若当前 shell 已是 pwsh，可直接读 `$PSVersionTable.PSVersion.Major`）；检测到 major ≥ 7 时，将资源文件 `resources/powershell-guard.md`（Base directory 为本 skill 目录）中的 `Windows PowerShell 防错` 小节按流程 6 的追加规则写入 AGENTS.md（若 AGENTS.md 已含该小节则跳过）。非 Windows 环境或未检测到 pwsh 7.x 则跳过本步。
 7. **安装通用 skill project-memory-records**：若 `.agents/skills/project-memory-records/SKILL.md` 不存在，把本技能内置的 `resources/project-memory-records/` 整个目录原样复制到 `.agents/skills/project-memory-records/`，保持子目录结构（当前仅含 `SKILL.md`；后续新增资源文件时一并复制）。
 8. **安装通用 skill github-commit**：若 `.agents/skills/github-commit/SKILL.md` 不存在，把本技能内置的 `resources/github-commit/` 整个目录（含 `SKILL.md` 与 `resources/commit-guidelines.md`）原样复制到 `.agents/skills/github-commit/`，保持子目录结构。
 9. **注册 MCP server context7**：读取资源文件 `resources/context7-mcp.json`（Base directory 为本 skill 目录，server 定义模板）与 `resources/clients.json`（Base directory 为本 skill 目录，各客户端配置约定表），按以下顺序处理：
@@ -64,12 +80,12 @@ description: 按项目类型初始化 AI 工作区文件夹结构，创建通用
    - JSON 格式配置（opencode.json、.mcp.json、.cursor/mcp.json、.vscode/mcp.json 等）：若目标文件不存在，创建之；若已存在，保留全部现有字段，仅在客户端对应的 `mcp` 键对象中追加 `context7`，**不覆盖、不删除现有配置**；
    - TOML 等其他格式（如 codex 的 config.toml）：不自动改写，给出该客户端的 context7 手动配置示例（含 mcp 键名与语法）供用户粘贴；
    - 环境变量引用语法因客户端而异（如 `${VAR}`、`{env:VAR}`、直接字面值等）：优先用 `clients.json` 记录的语法，未记录的默认 `${VAR}` 并询问用户。
-10. 在当前目录写入标记文件 `.workspace-init.json`（记录项目类型、已创建文件夹、已装组件、时间），用于重复初始化时跳过已存在目录。
+10. 在当前目录写入标记文件 `.workspace-init.json`（记录项目类型、已创建文件夹的英文名、已装组件、时间），用于重复初始化时跳过已存在目录。
 11. 汇总输出：已创建、已存在（保留原内容）、模板记忆与组件安装情况。
 
 ## 说明
 
-- 文件夹名使用用户原话（允许中文），创建在当前工作目录下。
+- 文件夹用英文名创建在当前工作目录下（小写、连字符分隔）；交互时用中文 `label` 展示。用户用中文列出文件夹后，需为每个确定一个英文目录名。
 - **安全保护**：流程 0 必须先于一切操作执行；当前工作目录命中危险目录（Windows 系统目录、程序目录、根目录、用户主目录/工具配置目录等）时，直接拒绝并提示用户切换目录，绝不继续。
 - **初始化前必须检查目标文件夹**：已存在的文件夹一律跳过创建，且完整保留其原有内容（含已有文件与子文件夹），不删除、不清空、不覆盖任何内容。
 - 汇总输出中需明确区分：新创建、已存在（保留原内容）、模板记忆与组件安装情况。
