@@ -1,17 +1,18 @@
 ---
 name: workspace-init
-description: 按项目类型初始化 AI 工作区文件夹结构，创建通用 AGENTS.md（含三条通用规则），安装 project-memory-records 与 github-commit 通用 skill 并注册 context7 MCP，使用技能记忆模板（通用文件夹自动创建，特殊文件夹逐项询问）。Use when 用户说"初始化AI工作区"、"初始化工作区"、"创建比赛文件夹"、"创建项目文件夹"、"新建工作区文件夹结构"、"AI 工作区初始化" 等初始化文件夹结构的请求。
+description: 按项目类型初始化 AI 工作区文件夹结构，创建通用 AGENTS.md（含三条通用规则），安装 project-memory-records、github-commit 与 project-lingo（项目黑话词典）通用 skill 并注册 context7 MCP，使用技能记忆模板（通用文件夹自动创建，特殊文件夹逐项询问）。Use when 用户说"初始化AI工作区"、"初始化工作区"、"创建比赛文件夹"、"创建项目文件夹"、"新建工作区文件夹结构"、"AI 工作区初始化" 等初始化文件夹结构的请求。
 ---
 
 # 工作区初始化 (Workspace Init)
 
-在**当前工作目录**下完成五件事：
+在**当前工作目录**下完成六件事：
 
 1. 按"项目类型模板"创建子文件夹（模板记忆保存在同目录 `config.json`）。
 2. 创建通用 `AGENTS.md`（含三条通用规则）。
 3. 安装通用 skill `project-memory-records` 到 `.agents/skills/`。
 4. 安装通用 skill `github-commit` 到 `.agents/skills/`。
-5. 注册 MCP server `context7`（配置见 `resources/context7-mcp.json`）。
+5. 安装通用 skill `project-lingo`（项目黑话词典）到 `.agents/skills/`。
+6. 注册 MCP server `context7`（配置见 `resources/context7-mcp.json`）。
 
 ## 数据文件 config.json
 
@@ -73,6 +74,7 @@ description: 按项目类型初始化 AI 工作区文件夹结构，创建通用
    6a. **PowerShell 防错规则（条件追加，Windows 环境）**：检测用户是否使用 PowerShell 7.x——运行 `pwsh -NoProfile -Command '$PSVersionTable.PSVersion.Major'`（若当前 shell 已是 pwsh，可直接读 `$PSVersionTable.PSVersion.Major`）；检测到 major ≥ 7 时，将资源文件 `resources/powershell-guard.md`（Base directory 为本 skill 目录）中的 `Windows PowerShell 防错` 小节按流程 6 的追加规则写入 AGENTS.md（若 AGENTS.md 已含该小节则跳过）。非 Windows 环境或未检测到 pwsh 7.x 则跳过本步。
 7. **安装通用 skill project-memory-records**：若 `.agents/skills/project-memory-records/SKILL.md` 不存在，把本技能内置的 `resources/project-memory-records/` 整个目录原样复制到 `.agents/skills/project-memory-records/`，保持子目录结构（当前仅含 `SKILL.md`；后续新增资源文件时一并复制）。
 8. **安装通用 skill github-commit**：若 `.agents/skills/github-commit/SKILL.md` 不存在，把本技能内置的 `resources/github-commit/` 整个目录（含 `SKILL.md` 与 `resources/commit-guidelines.md`）原样复制到 `.agents/skills/github-commit/`，保持子目录结构。
+8a. **安装通用 skill project-lingo（项目黑话词典）**：若 `.agents/skills/project-lingo/SKILL.md` 不存在，把本技能内置的 `resources/project-lingo/` 整个目录原样复制到 `.agents/skills/project-lingo/`，保持子目录结构。词条正文由该 skill 首次使用时在 `docs/lingo.md` 初始化，此处不创建。
 9. **注册 MCP server context7**：读取资源文件 `resources/context7-mcp.json`（Base directory 为本 skill 目录，server 定义模板）与 `resources/clients.json`（Base directory 为本 skill 目录，各客户端配置约定表），按以下顺序处理：
    - **确认客户端**：询问用户当前使用的 AI 客户端（如 opencode、codex、claude code、cursor、vscode 等）。`clients.json` 已记录常见客户端的全局配置路径、项目级配置文件名、格式与 `mcp` 键名；未记录的客户端，请用户提供其全局/项目级配置位置与格式；
    - **先检查全局是否已注册**：按 `clients.json` 中该客户端的 `globalConfig` 路径逐一读取全局配置，若 `context7` 已注册，**跳过写入**，汇总中记录"全局已注册，无需项目级配置"，本步结束；
