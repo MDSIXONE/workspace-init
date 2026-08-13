@@ -12,7 +12,8 @@ description: 按项目类型初始化 AI 工作区文件夹结构，创建通用
 3. 安装通用 skill `project-memory-records` 到 `.agents/skills/`。
 4. 安装通用 skill `github-commit` 到 `.agents/skills/`。
 5. 安装通用 skill `project-lingo`（项目黑话词典）到 `.agents/skills/`。
-6. 注册 MCP server `context7`（配置见 `resources/context7-mcp.json`）。
+6. 安装通用 skill `project-index`（项目结构索引）到 `.agents/skills/`。
+7. 注册 MCP server `context7`（配置见 `resources/context7-mcp.json`）。
 
 ## 数据文件 config.json
 
@@ -75,6 +76,7 @@ description: 按项目类型初始化 AI 工作区文件夹结构，创建通用
 7. **安装通用 skill project-memory-records**：若 `.agents/skills/project-memory-records/SKILL.md` 不存在，把本技能内置的 `resources/project-memory-records/` 整个目录原样复制到 `.agents/skills/project-memory-records/`，保持子目录结构（当前仅含 `SKILL.md`；后续新增资源文件时一并复制）。
 8. **安装通用 skill github-commit**：若 `.agents/skills/github-commit/SKILL.md` 不存在，把本技能内置的 `resources/github-commit/` 整个目录（含 `SKILL.md` 与 `resources/commit-guidelines.md`）原样复制到 `.agents/skills/github-commit/`，保持子目录结构。
 8a. **安装通用 skill project-lingo（项目黑话词典）**：若 `.agents/skills/project-lingo/SKILL.md` 不存在，把本技能内置的 `resources/project-lingo/` 整个目录原样复制到 `.agents/skills/project-lingo/`，保持子目录结构。词条正文由该 skill 首次使用时在 `docs/lingo.md` 初始化，此处不创建。
+8b. **安装通用 skill project-index（项目结构索引）**：若 `.agents/skills/project-index/SKILL.md` 不存在，把本技能内置的 `resources/project-index/` 整个目录原样复制到 `.agents/skills/project-index/`，保持子目录结构。索引文件 `INDEX.md` 由该 skill 首次使用时扫描项目生成（AI 总结项目结构时写入、快速了解项目时读取），此处不创建。
 9. **注册 MCP server context7**：读取资源文件 `resources/context7-mcp.json`（Base directory 为本 skill 目录，server 定义模板）与 `resources/clients.json`（Base directory 为本 skill 目录，各客户端配置约定表），按以下顺序处理：
    - **确认客户端**：询问用户当前使用的 AI 客户端（如 opencode、codex、claude code、cursor、vscode 等）。`clients.json` 已记录常见客户端的全局配置路径、项目级配置文件名、格式与 `mcp` 键名；未记录的客户端，请用户提供其全局/项目级配置位置与格式；
    - **先检查全局是否已注册**：按 `clients.json` 中该客户端的 `globalConfig` 路径逐一读取全局配置，若 `context7` 已注册，**跳过写入**，汇总中记录"全局已注册，无需项目级配置"，本步结束；
