@@ -1,5 +1,7 @@
 # workspace-init
 
+![workspace-init 项目封面](assets/cover.png)
+
 按项目类型初始化 AI 工作区文件夹结构。
 
 ## 功能
