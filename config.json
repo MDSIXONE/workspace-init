@@ -2,31 +2,92 @@
   "templates": {
     "比赛": {
       "common": [
-        {"name": "rules", "label": "比赛规则"},
-        {"name": "src", "label": "比赛源码"},
-        {"name": "docs", "label": "文档"},
-        {"name": "tmp", "label": "临时文件"}
+        {
+          "name": "rules",
+          "label": "比赛规则"
+        },
+        {
+          "name": "src",
+          "label": "比赛源码"
+        },
+        {
+          "name": "docs",
+          "label": "文档"
+        },
+        {
+          "name": "tmp",
+          "label": "临时文件"
+        }
       ],
       "special": [
-        {"name": "maps", "label": "比赛地图"},
-        {"name": "machine-info", "label": "机器信息"},
-        {"name": "simulation", "label": "仿真环境"},
-        {"name": "report", "label": "技术报告"}
+        {
+          "name": "maps",
+          "label": "比赛地图"
+        },
+        {
+          "name": "machine-info",
+          "label": "机器信息"
+        },
+        {
+          "name": "simulation",
+          "label": "仿真环境"
+        },
+        {
+          "name": "report",
+          "label": "技术报告"
+        }
       ]
     },
     "开发桌面应用": {
       "common": [
-        {"name": "src", "label": "源码"},
-        {"name": "docs", "label": "文档"},
-        {"name": "tmp", "label": "临时文件"},
-        {"name": "assets", "label": "资源"},
-        {"name": "build", "label": "构建"}
+        {
+          "name": "src",
+          "label": "源码"
+        },
+        {
+          "name": "docs",
+          "label": "文档"
+        },
+        {
+          "name": "tmp",
+          "label": "临时文件"
+        },
+        {
+          "name": "assets",
+          "label": "资源"
+        },
+        {
+          "name": "build",
+          "label": "构建"
+        }
       ],
       "special": [
-        {"name": "config", "label": "配置"},
-        {"name": "release", "label": "发布"},
-        {"name": "deps", "label": "依赖"}
+        {
+          "name": "config",
+          "label": "配置"
+        },
+        {
+          "name": "release",
+          "label": "发布"
+        },
+        {
+          "name": "deps",
+          "label": "依赖"
+        }
       ]
+    },
+    "绿洲启元 UGC 开发": {
+      "common": [
+        {
+          "name": "docs",
+          "label": "文档"
+        },
+        {
+          "name": "tmp",
+          "label": "临时文件"
+        }
+      ],
+      "special": []
     }
   }
 }

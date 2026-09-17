@@ -1,11 +1,9 @@
-# Windows PowerShell 防错（本机 pwsh 7.x）
+# PowerShell execution reference
 
-在 Windows 上执行终端命令前，先对照以下最容易犯的错：
+Consult the relevant item when constructing a fragile PowerShell command or diagnosing a shell error; this is not a per-command checklist.
 
-- 比较用 `-eq`/`-ne`（不是 `==`）；赋值是 `=`，`==` 在 PowerShell 中不合法。
-- `curl`/`wget`/`ls`/`cat` 都是别名（实为 Invoke-WebRequest / Get-ChildItem / Get-Content），行为与 Linux 不同；需要真实 curl 时用 `curl.exe`。
-- 转义符是反引号 `` ` ``，不是 `\`；双引号内 `$var` 会插值，需要字面量用单引号或 `` `${var} ``。
-- cmdlet/原生命令失败不中止脚本：执行原生 exe 后必须检查 `$LASTEXITCODE`（或 `$?`）；需要严格时用 `$ErrorActionPreference = "Stop"`。
-- 调用路径含空格的 exe 用调用运算符：`& "C:\Program Files\app.exe" args`。
-- 管道传的是对象不是文本；`2>&1` 是把错误流并入成功流，不是 stderr 纯文本。
-- 中文输出乱码时先设 `[Console]::OutputEncoding = [Text.Encoding]::UTF8`，读写文件用 `-Encoding UTF8`。
+- PowerShell uses `-eq` / `-ne` for comparison and the backtick for escaping. Single-quoted strings preserve literal `$` characters.
+- Command resolution varies by version and user profile. Use `Get-Command` when uncertain; use `curl.exe` when the native curl executable is intended. Do not assume curl or wget are PowerShell aliases.
+- Invoke executable paths containing spaces with `&`. Avoid composing file deletion or movement across shells. Resolve destructive targets and verify they remain within the authorized directory.
+- Check an external command's exit status before dependent operations. `$ErrorActionPreference = 'Stop'` handles PowerShell errors but is not a universal substitute for checking native exit codes.
+- PowerShell pipelines carry objects. Specify text encoding when it matters for file interoperability; diagnose actual encoding failures rather than changing console settings routinely.

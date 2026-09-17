@@ -1,96 +1,37 @@
 ---
 name: workspace-init
-description: 按项目类型初始化 AI 工作区文件夹结构，创建通用 AGENTS.md（含三条通用规则），安装 project-memory-records、github-commit 与 project-lingo（项目黑话词典）通用 skill 并注册 context7 MCP，使用技能记忆模板（通用文件夹自动创建，特殊文件夹逐项询问）。Use when 用户说"初始化AI工作区"、"初始化工作区"、"创建比赛文件夹"、"创建项目文件夹"、"新建工作区文件夹结构"、"AI 工作区初始化" 等初始化文件夹结构的请求。
+description: Initialize project folders or an AI workspace on request. Folder-only requests create folders; a full AI workspace may include project instructions and selected helper skills. MCP setup is a separate explicit option.
 ---
 
-# 工作区初始化 (Workspace Init)
+# Workspace initialization
 
-在**当前工作目录**下完成六件事：
+## Choose the requested scope
 
-1. 按"项目类型模板"创建子文件夹（模板记忆保存在同目录 `config.json`）。
-2. 创建通用 `AGENTS.md`（含三条通用规则）。
-3. 安装通用 skill `project-memory-records` 到 `.agents/skills/`。
-4. 安装通用 skill `github-commit` 到 `.agents/skills/`。
-5. 安装通用 skill `project-lingo`（项目黑话词典）到 `.agents/skills/`。
-6. 安装通用 skill `project-index`（项目结构索引）到 `.agents/skills/`。
-7. 注册 MCP server `context7`（配置见 `resources/context7-mcp.json`）。
+- Folder-only request: create the requested directory structure; do not install skills or configure tools.
+- Full AI workspace: create appropriate folders and project instructions, and install the bundled memory, commit, terminology and index helper skills unless the user selects a smaller set. Describe the chosen scope briefly and proceed with clear requests.
+- Register Context7 only when requested. Do not infer authorization to modify global client settings from folder creation.
 
-## 数据文件 config.json
+Use supplied project type, names and preferences. Read `config.json` only when reusing or saving a directory template. For new types, infer a modest structure from the request; bundle any material missing choices in one question. Optional folders need not be confirmed individually. Save reusable template changes only when the user requests remembering them.
 
-每个文件夹用对象 `{name, label}` 表示：`name` 是实际创建的英文目录名，`label` 是交互时展示的中文名。
+## Check the target
 
-```json
-{
-  "templates": {
-    "比赛": {
-      "common": [
-        {"name": "rules", "label": "比赛规则"},
-        {"name": "src", "label": "比赛源码"},
-        {"name": "docs", "label": "文档"},
-        {"name": "tmp", "label": "临时文件"}
-      ],
-      "special": [
-        {"name": "maps", "label": "比赛地图"},
-        {"name": "machine-info", "label": "机器信息"},
-        {"name": "simulation", "label": "仿真环境"},
-        {"name": "report", "label": "技术报告"}
-      ]
-    }
-  }
-}
-```
+Resolve the explicit target or current workspace. Refuse accidental initialization of filesystem roots, OS/program directories or the user home itself; ask for a project destination while continuing any independent planning. Do not reject a legitimate project solely because an ancestor has a dot-prefixed name.
 
-- `name`：英文目录名，实际创建到磁盘的文件夹名（小写、连字符分隔，如 `src`、`machine-info`）。
-- `label`：中文显示名，仅在交互（询问、汇总）时展示。
-- `common`：通用文件夹，每次自动创建。
-- `special`：特殊文件夹，每次逐项询问是否需要。
-- 模板可以按项目类型（比赛、研发、课程作业等）各存一套；`config.json` 不存在时视为空配置。
+Inspect target existence and name collisions, not the contents of every existing directory. Preserve existing files and configuration. Create missing directories only. If a planned file would overwrite user content, merge only an unambiguous, authorized addition; otherwise leave that dependent change pending and explain the conflict.
 
-## 流程
+## Full workspace components
 
-0. **安全前置检查（危险目录保护）**：先解析当前工作目录的绝对路径（Windows 下不区分大小写），若命中以下任一情况，**立即停止**，不做任何创建/写入/复制操作，并告知用户当前目录是系统/危险目录，请先切换到真正的项目目录（如 `cd` 到用户自己的工作区）后再调用本技能：
-   - Windows 系统目录及其子目录：`C:\Windows`（含 `System32`、`SysWOW64`、`WinSxS` 等）、`C:\Windows.old`；
-   - 程序与系统数据目录：`C:\Program Files`、`C:\Program Files (x86)`、`C:\ProgramData`；
-   - 文件系统根目录（如 `C:\`、`D:\`）；
-   - 用户主目录本身（如 `C:\Users\用户名`）以及工具/配置目录（路径中含 `.config`、`.agents`、`.claude`、`.opencode` 等以 `.` 开头的配置目录）；
-   - 其他明显属于操作系统或已安装软件（如 `C:\Windows\System32` 内的任何子路径）的目录。
-   只有确认当前目录是用户自己的项目/工作区目录（如 `C:\Users\用户名\projects\xxx`）后才继续后续步骤。
-1. **初始化前检查**：先扫描当前工作目录，列出已存在的文件夹及其内部内容。对每个已存在的文件夹：
-   - **完整保留原文件夹及内部所有文件/子文件夹**，不删除、不清空、不重建、不覆盖任何内容；
-   - 仅在文件夹不存在时才创建新文件夹；
-   - 将检查结果记入汇总（"已存在（保留原内容）"），并告知用户哪些文件夹已存在且被原样保留。
-2. 读取 `config.json`，加载已有模板。
-3. 询问用户：这个文件夹用来做什么项目/用途（如"比赛"、"研发"、"课程作业"）。得到类型名 `T`（若用户直接说"初始化AI工作区 比赛"这类带类型的话，跳过询问）。
-4. 若 `templates` 中**没有**类型 `T`（首次使用该类型）：
-   a. 询问需要创建哪些子文件夹（用中文展示建议，如"比赛规则、比赛地图、比赛源码、机器信息、仿真环境、文档、临时文件、技术报告"），让用户用中文列出（逗号/空格/换行分隔均可）。
-   b. 为用户列出的每个中文文件夹名建议一个英文目录名（小写、连字符分隔，如"源码"→`src`、"临时文件"→`tmp`、"机器信息"→`machine-info`），列表展示给用户确认或修改。
-   c. 用确认后的英文名创建文件夹（仅创建不存在的；已存在且有内容的文件夹保留原内容，跳过创建）。
-   d. 将列出的文件夹逐一询问分类：通用（每次都要）还是特殊（下次按需询问）。默认建议：规则/源码/文档/临时文件→通用；地图/环境/报告/机器信息→特殊，用户可修改。
-   e. 写入 `config.json`：`templates[T] = { "common": [{"name":..., "label":...}, ...], "special": [...] }`，并告知用户模板已记忆。
-5. 若类型 `T` 已有模板：
-   a. 直接创建全部 `common` 文件夹（用 `name` 英文名创建；已存在则跳过并保留原内容）。
-   b. 逐个询问 `special` 文件夹是否需要创建（用 `label` 中文名展示；已存在且非空的保留原内容，无需重建）。
-   c. 询问是否要追加新文件夹或调整分类；用户补充的文件夹需同时确定中文名和英文名，默认加入 `special`（可再改），随后更新 `config.json`。
-6. **创建通用 AGENTS.md**（仅当不存在时创建；若已存在，则仅追加缺失的小节，不覆盖已有内容）：模板内容见资源文件 `resources/universal-rules.md`（Base directory 为本 skill 目录），用该模板创建/追加 AGENTS.md。模板含 `Universal Rules`（三条通用规则）。提交规范见 `github-commit` 技能（全局已注册、自动加载），无需在 AGENTS.md 中重申。
-   6a. **PowerShell 防错规则（条件追加，Windows 环境）**：检测用户是否使用 PowerShell 7.x——运行 `pwsh -NoProfile -Command '$PSVersionTable.PSVersion.Major'`（若当前 shell 已是 pwsh，可直接读 `$PSVersionTable.PSVersion.Major`）；检测到 major ≥ 7 时，将资源文件 `resources/powershell-guard.md`（Base directory 为本 skill 目录）中的 `Windows PowerShell 防错` 小节按流程 6 的追加规则写入 AGENTS.md（若 AGENTS.md 已含该小节则跳过）。非 Windows 环境或未检测到 pwsh 7.x 则跳过本步。
-7. **安装通用 skill project-memory-records**：若 `.agents/skills/project-memory-records/SKILL.md` 不存在，把本技能内置的 `resources/project-memory-records/` 整个目录复制到 `.agents/skills/project-memory-records/`，保持子目录结构（当前仅含 `SKILL.md.template`；后续新增资源文件时一并复制），并将复制后的 `SKILL.md.template` 重命名为 `SKILL.md`（安装源用 `.template` 后缀存放，避免被全局技能扫描 `skills/**/SKILL.md` 误注册为独立技能）。
-8. **安装通用 skill github-commit**：若 `.agents/skills/github-commit/SKILL.md` 不存在，把本技能内置的 `resources/github-commit/` 整个目录（含 `SKILL.md.template` 与 `resources/commit-guidelines.md`）复制到 `.agents/skills/github-commit/`，保持子目录结构，并将复制后的 `SKILL.md.template` 重命名为 `SKILL.md`（安装源用 `.template` 后缀存放，避免被全局技能扫描 `skills/**/SKILL.md` 误注册为独立技能）。
-8a. **安装通用 skill project-lingo（项目黑话词典）**：若 `.agents/skills/project-lingo/SKILL.md` 不存在，把本技能内置的 `resources/project-lingo/` 整个目录复制到 `.agents/skills/project-lingo/`，保持子目录结构，并将复制后的 `SKILL.md.template` 重命名为 `SKILL.md`（安装源用 `.template` 后缀存放，避免被全局技能扫描 `skills/**/SKILL.md` 误注册为独立技能）。词条正文由该 skill 首次使用时在 `docs/lingo.md` 初始化，此处不创建。
-8b. **安装通用 skill project-index（项目结构索引）**：若 `.agents/skills/project-index/SKILL.md` 不存在，把本技能内置的 `resources/project-index/` 整个目录复制到 `.agents/skills/project-index/`，保持子目录结构，并将复制后的 `SKILL.md.template` 重命名为 `SKILL.md`（安装源用 `.template` 后缀存放，避免被全局技能扫描 `skills/**/SKILL.md` 误注册为独立技能）。索引文件 `INDEX.md` 由该 skill 首次使用时扫描项目生成（AI 总结项目结构时写入、快速了解项目时读取），此处不创建。
-9. **注册 MCP server context7**：读取资源文件 `resources/context7-mcp.json`（Base directory 为本 skill 目录，server 定义模板）与 `resources/clients.json`（Base directory 为本 skill 目录，各客户端配置约定表），按以下顺序处理：
-   - **确认客户端**：询问用户当前使用的 AI 客户端（如 opencode、codex、claude code、cursor、vscode 等）。`clients.json` 已记录常见客户端的全局配置路径、项目级配置文件名、格式与 `mcp` 键名；未记录的客户端，请用户提供其全局/项目级配置位置与格式；
-   - **先检查全局是否已注册**：按 `clients.json` 中该客户端的 `globalConfig` 路径逐一读取全局配置，若 `context7` 已注册，**跳过写入**，汇总中记录"全局已注册，无需项目级配置"，本步结束；
-   - **写入项目根**：目标配置文件一律写入**项目根**（用 `git rev-parse --show-toplevel` 判定，未检出 git 时用工作区根），而非当前子目录；文件名、`mcp` 键名（如 opencode 的 `mcp`、claude code/cursor 的 `mcpServers`、vscode 的 `servers`）、环境变量语法（如 `{env:VAR}`、`${VAR}`）均按 `clients.json` 中该客户端的约定，将模板中的 server 定义改写后追加；
-   - JSON 格式配置（opencode.json、.mcp.json、.cursor/mcp.json、.vscode/mcp.json 等）：若目标文件不存在，创建之；若已存在，保留全部现有字段，仅在客户端对应的 `mcp` 键对象中追加 `context7`，**不覆盖、不删除现有配置**；
-   - TOML 等其他格式（如 codex 的 config.toml）：不自动改写，给出该客户端的 context7 手动配置示例（含 mcp 键名与语法）供用户粘贴；
-   - 环境变量引用语法因客户端而异（如 `${VAR}`、`{env:VAR}`、直接字面值等）：优先用 `clients.json` 记录的语法，未记录的默认 `${VAR}` 并询问用户。
-10. 在当前目录写入标记文件 `.workspace-init.json`（记录项目类型、已创建文件夹的英文名、已装组件、时间），用于重复初始化时跳过已存在目录。
-11. 汇总输出：已创建、已存在（保留原内容）、模板记忆与组件安装情况。
+- Consult `resources/universal-rules.md` for minimal project defaults. Read existing project instructions and applicable global rules first; do not copy rules already inherited. Preserve established language, workflow and client conventions.
+- Use the actual client's instruction entrypoint. In mixed-client projects, keep shared instructions in one source with explicit references from required entrypoints; do not assume CLAUDE.md overrides AGENTS.md or is automatically read by Codex.
+- Install selected helpers from `resources/<skill>/` to `.agents/skills/<skill>/` only when absent. Copy their resources and rename `SKILL.md.template` to `SKILL.md`. Templates use this suffix to prevent accidental global discovery. Do not create empty history, glossary or index files.
+- Consult `resources/powershell-guard.md` only for a relevant PowerShell concern. Do not append a shell tutorial to every project's AGENTS.md.
 
-## 说明
+## Optional Context7 setup
 
-- 文件夹用英文名创建在当前工作目录下（小写、连字符分隔）；交互时用中文 `label` 展示。用户用中文列出文件夹后，需为每个确定一个英文目录名。
-- **安全保护**：流程 0 必须先于一切操作执行；当前工作目录命中危险目录（Windows 系统目录、程序目录、根目录、用户主目录/工具配置目录等）时，直接拒绝并提示用户切换目录，绝不继续。
-- **初始化前必须检查目标文件夹**：已存在的文件夹一律跳过创建，且完整保留其原有内容（含已有文件与子文件夹），不删除、不清空、不覆盖任何内容。
-- 汇总输出中需明确区分：新创建、已存在（保留原内容）、模板记忆与组件安装情况。
-- 每次使用结束，若 `config.json` 有更新，主动告知用户记忆变化，便于下次复用。
+Read `resources/context7-mcp.json` and `resources/clients.json` only for requested MCP configuration. Infer the current client from available context. Check whether Context7 is already configured using only relevant fields; avoid printing credentials. Treat the client table as a hint and verify uncertain syntax against current official documentation.
+
+Prefer project-scoped configuration. Preserve unrelated settings, use a format-aware edit for JSON or TOML and validate parsing. If required configuration details or permissions are missing, report them and complete independent workspace steps. Do not refuse an authorized TOML edit merely because it is TOML.
+
+## Completion
+
+Verify requested paths and installed helper entrypoints, plus parsing of any changed configuration. No business-code tests are required for directory scaffolding. For full initialization, record installed components and the project type in `.workspace-init.json`. Summarize created items, preserved conflicts and any pending requested setup. Do not install additional tools, commit or push unless requested.
